@@ -1,0 +1,922 @@
+Föreläsning 7 och 8 – Select-frågor 
+
+1. Vem har störst förmögenhet av våra tjuvar? 
+select namn, max(Förmögenhet) from Rånare;
+
+2. Ta fram de fem tjuvar med högst rankning i databasen. 
+select top 5 namn
+from rånare;
+
+3. Ta fram de fem tjuvar med lägst förmögenhet. 
+select top 5 namn
+from rånare
+order by namn desc
+
+4. Om vi använder nyckelorden ”with ties” i de ovanstående två frågorna, kommer det göra någon skillnad på resultatet? Varför/varför inte? 
+
+select top 5 with ties
+rankning, namn
+from rånare
+order by rankning;
+
+select top 5 with ties
+rankning, namn
+from rånare
+order by rankning desc
+
+Finns inga tjuvar med samma rankning, så det kan inte finnas några “ties”.
+
+5. Ta fram tjuvarnas namn, rankning och kännetecken ordnat efter namn (A-Ö). 
+select namn
+from rånare
+order by namn
+
+6. Låt oss säga att tjuvarna betalar 30 % i skatt på sin förmögenhet. Ta fram en resultattabell som har med tjuvarnas namn och deras lön efter skatt. Kolumnen med lönen ska heta ”lön efter skatt”.
+
+select namn, (0.7 * förmögenhet) as [Lön efter skatt]
+from rånare;
+
+7. Fortsätt på SQL-frågan från uppgift 6 och lägg till en bonus på 10% av tjuvarnas förmögenhet efter att skatten har dragits. Tänk på prioriteringsordningen!
+
+select namn, (0.7 * förmögenhet) * 1.1 as [Lön efter skatt]
+from rånare;
+
+
+8. Vi vill ha fram en resultattabell med bara en enda kolumn, där tjuvarnas namn och deras kännetecken ska stå med, i formatet: ”Ma Barker, kännetecken: Folk tror inte…”. 
+
+select namn + ', kännetecken: ' + Kännetecken
+from rånare
+
+9. Ta fram en resultattabell som har en enda kolumn med namn och rankning för varje tjuv. Strängen ska ha formateringen ”Ma Barker har 10 i rankning”. 
+
+select namn + ', har ' + cast(rankning as varchar) + ' i rankning'
+from rånare
+
+10. Fortsätt med den förra SQL-frågan och skapa samma resultat, men öka varje tjuvs rankning med 1 innan det skrivs ut.
+
+select namn + ', har ' + cast(rankning + 1 as varchar) + ' i rankning'
+from rånare
+Föreläsning 9 och 10 – Where-villkor 
+
+1. Vilka tjuvar har en förmögenhet större än 500 000? 
+
+select namn
+from rånare
+where förmögenhet > 500000;
+
+2. Vilka tjuvar sitter just nu i fängelse? 
+
+select namn
+from rånare
+where inburad = 1;
+
+3. Vilka vapen finns det mer än 100 stycken i lager? 
+
+select typ
+from vapen
+where antal > 100
+
+4. Vilka flyktbilar är från år 2003 eller senare? 
+
+select märke 
+from flyktbil
+where årsmodell >=  '2003-01-01'
+5. Vilka rån gav ett byte på mellan 100 000 och 300 000 kr? Skriv frågan på två olika sätt! 
+
+select datum
+from rån
+where byte <= 300000 AND byte >= 100000
+
+select datum
+from rån
+where byte BETWEEN 100000 AND 300000
+
+6. Ta fram alla flyktbilar som är från år 2000, 2003 eller 2004. 
+
+select *
+from flyktbil 
+where year(årsmodell) = 2000 OR year(årsmodell) = 2003 OR year(årsmodell) = 2004;
+
+7. Ta fram alla banker som inte är SEB, Swedbank eller Nordea. 
+
+select namn
+from bank
+where namn != 'SEB' AND namn != 'Swedbank' AND namn != 'Nordea';
+
+8. Ta fram de vapen som inte har ett kalibervärde
+
+select typ
+from vapen 
+where kaliber is null
+
+9. Ta fram de banker som har en adress som börjar på B. 
+
+select namn
+from bank
+where adress like 'B%';
+
+10. Ta fram de banker som har en adress som slutar med en trea. 
+
+select namn
+from bank
+where adress like '%3';
+
+11. Ta fram de banker som har en adress där ordet ”vägen” ingår. 
+
+select namn
+from bank
+where adress like '%vägen%';
+
+
+
+12. Ta fram de tjuvar som inte har ett namn som börjar på C. Skriv frågan på två olika sätt!
+
+select namn
+from rånare
+where namn not like 'C%';
+
+select namn
+from rånare
+where namn like '[A-B-D-E-F-G-H-I-J-K-L-M-N-O-P-Q-R-S-T-U-V-X-Y-Z]%';
+
+13. Ta fram de vapen som är av typen revolver. 
+
+select typ 
+from vapen
+where typ like '%revolver%'
+
+14. Ta fram de rån som utfördes innan 2014 och som inte hade några civila offer. 
+
+select datum
+from rån
+where datum < '2014-01-01' AND offer = 0;
+
+15. Ta fram de rån som bara är i planeringsstadiet och ännu inte utförts. 
+
+select rånID, datum
+from rån
+where offer is null AND byte is null;
+
+Föreläsning 11 och 12 – Join-villkor
+1. Ta fram datum, byte och namn på banken för alla rån med en explicit, inre (”vanlig”) join. 
+
+select rån.datum, rån.byte, bank.namn
+from Rån
+join Rån_Bank
+on Rån.RånID = Rån_Bank.RånID
+join bank
+on Rån_Bank.bankID = Bank.BankID;
+
+2. Ta fram samma information men med en implicit inre join. 
+
+select rån.datum, rån.byte, bank.namn
+from rån, bank, Rån_Bank
+where rån.rånID = Rån_Bank.RånID
+AND
+Rån_Bank.BankID = bank.BankID
+3. Ta fram namnen på bankrånarna samt vilken typ av vapen de äger. Prova att använda både explicit och implicit inre join. Hint: två join krävs i den här frågan: från bankrånare till sambandstabellen och till vapentabellen. 
+
+select namn, typ
+from rånare
+join Rånare_Vapen
+on rånare.rånarID = Rånare_Vapen.rånarID
+join Vapen
+on Rånare_Vapen.VapenID = Vapen.VapenID
+order by namn;
+
+select namn, typ
+from rånare, vapen, Rånare_Vapen
+where rånare.rånarID = Rånare_Vapen.rånarID
+AND 
+Rånare_Vapen.vapenID = vapen.vapenID
+order by namn;
+
+4. Ta fram samma information som ovan men med en yttre, right join med rånartabellen till höger. Blir det någon skillnad på resultatet från en inre join? Varför/varför inte? 
+
+select namn, typ
+from Vapen
+join Rånare_Vapen
+on Vapen.VapenID = Rånare_Vapen.VapenID
+right join Rånare
+on Rånare_Vapen.RånarID = Rånare.rånarID
+order by namn;
+
+
+select namn, typ
+from Vapen
+inner join Rånare_Vapen
+on Vapen.VapenID = Rånare_Vapen.VapenID
+inner join Rånare
+on Rånare_Vapen.RånarID = Rånare.rånarID
+order by namn;
+
+Right join tar med allt från den högra tabellen även om den inte har ett vapen kopplat till sig, vilket resulterar i att null kommer med i resultatet.
+
+Inner join tar med resultatet där den finner en match mellan de 2 tabellerna, vilket kommer att vara alla rånare med ett vapen.
+
+5. Vilken färg hade flyktbilen som användes vid rånet som utfördes den 28 december 2014? 
+
+select färg 
+from flyktbil
+where flyktbilID in (select flyktbil
+		       from rån
+		        where datum = '2014-12-28')
+
+6. Vilka rånare var med i rånet där bytet var 800 000 kr? 
+
+select namn
+from rånare
+where RånarID in ( select RånarID
+				   from Rån_Rånare
+				   where RånID in(select RånID
+								  from rån
+								  where byte = 800000));
+
+7. Vilket/vilka datum rånades Nordea? 
+
+Select Bank.Namn, rån.datum
+From Rån 
+join Rån_Bank 
+on Rån.RånID = Rån_Bank.RånID
+join Bank
+on Rån_Bank.BankID = Bank.BankID
+where bank.namn = 'Nordea';
+
+8. Vilken/vilka banker har aldrig blivit rånade? 
+
+select *
+from bank
+left outer join Rån_Bank
+on bank.bankID = Rån_Bank.BankID
+where Rån_Bank.BankID is null;
+
+9. Ta fram en resultattabell som innehåller alla rån, tillsammans med alla rånare och alla banker, även de rånare som inte medverkat vid något rån, och även de banker som inte blivit rånade. 
+
+select *
+from rånare
+full join Rån_Rånare
+on rånare.rånarID = Rån_Rånare.RånarID
+full join Rån
+on Rån_Rånare.RånID = Rån.RånID
+full join Rån_Bank
+on Rån.RånID = Rån_Bank.RånID
+full join Bank
+on Rån_Bank.BankID = Bank.BankID
+order by rånare.namn;
+
+10. Uppdatera färgen på flyktbilen som användes vid rånet den 23 april i år. Gör den brun. 
+
+update flyktbil 
+set färg = 'Brun'
+from Rån
+join Flyktbil
+on Rån.flyktbil = flyktbil.flyktbilID
+where Rån.datum = '2015-04-23';
+
+Lös följande uppgifter genom att ställa SQL-frågor till databasen BloggingHeroes. 
+
+11. Skapa en resultattabell med de hjältar som är mentorer tillsammans med deras adepter. 
+
+select adepter.supername as adept, mentorer.supername as mentor 
+from Heroes as adepter
+join Heroes as mentorer
+on adepter.Mentor = mentorer.HeroID
+
+
+
+12. Skapa en resultattabell som ovan, men ta med även de hjältar som inte har någon mentor. 
+
+select adepter.supername as adept, mentorer.supername as mentor 
+from Heroes as adepter
+left outer join Heroes as mentorer
+on adepter.Mentor = mentorer.HeroID
+
+13. Skapa en resultattabell som ovan, men ta med även de hjältar som inte har några adepter. 
+
+select adepter.supername as adept, mentorer.supername as mentor 
+from Heroes as adepter
+right outer join Heroes as mentorer
+on adepter.Mentor = mentorer.HeroID
+where adepter.supername is null;
+
+14. Skapa en resultattabell som ovan, men ta med både de hjältar som inte har någon mentor, och de som inte har några adepter. 
+
+select adepter.supername as adept, mentorer.supername as mentor 
+from Heroes as adepter
+full join Heroes as mentorer
+on adepter.Mentor = mentorer.HeroID
+where mentorer.supername is null OR adepter.supername is null;
+
+Föreläsning 13 och 14 – Aggregatfunktioner, group by och having
+
+1. Hur många flyktbilar finns det? 
+
+select count(*)
+from flyktbil
+
+2. Hur mycket pengar har alla rån genererat åt Björnligan? 
+
+select sum(byte)
+from rån;
+
+3. Vad är medelvärdet för alla rånares förmögenhet? 
+
+select avg(byte)
+from rån;
+
+4. Hur många vapen finns det totalt i ligans vapenförråd? 
+
+select count(typ)
+from vapen;
+
+5. Hur många olika typer av kaliber finns det i databasen?
+
+select count(DISTINCT kaliber)
+from vapen;
+
+6. Hur stor är den minsta förmögenheten hos rånarna? 
+
+select min(förmögenhet)
+from rånare;
+
+7. Ta fram medelvärdet för rånarnas förmögenhet, grupperat på om de sitter i fängelse eller inte. (Dvs. ett medelvärde för de som sitter inne, och ett för de som är fria.) 
+
+select avg(förmögenhet)
+from rånare
+group by inburad;
+
+8. Ta fram samma resultat som ovan, men räkna bara med de rånare som har en rankning högre än 5. 
+
+select avg(förmögenhet)
+from rånare
+where rankning > 5
+group by inburad ;
+
+9. Ta fram genomsnittsbytet för rånen, grupperat på offer, för de rån som skedde senare än 2010. 
+
+select avg(byte), offer
+from rån
+where datum > '2010'
+AND byte is not null
+group by offer
+
+10. Ta fram samma resultat som ovan, men ta bara med de genomsnitt som är högre än 200 000 kr och ta inte med de framtida rånen i uträkningen. 
+
+select avg(byte), offer
+from rån
+where datum > '2010'
+AND byte is not null
+group by offer having ( avg(byte) > 200000);
+
+Föreläsning 15, 16 och 17 – Underfrågor
+1. Vilken bank var det som rånades när bytet blev 800 000 kr? 
+
+select bank.namn 
+from bank
+where bankID in (select BankID
+				 from Rån_Bank
+				 where RånID in(select Rån.RånID
+								from Rån
+								where byte = 800000));
+
+2. Vilket märke var det på flyktbilen vid rånet den 22 juli 2012?
+
+select flyktbil.märke
+from flyktbil
+where flyktbilID in(select flyktbil
+					from Rån
+					where datum = '2012-07-22');
+
+ 3. Vilka rånare var med vid bankrånet som hade 4 offer? 
+
+select rånare.namn 
+from rånare 
+where RånarID in(select  RånarID
+						 from  Rån_Rånare	
+						 where RånID in(select RånID
+									   from Rån
+									   where offer = 4));
+4. Vilka rånare har inte varit med i något bankrån?
+
+select rånare.namn
+from rånare
+where rånarID not in(select RånarID
+			     from Rån_Rånare);
+ 
+
+5. Vilka rånare har en förmögenhet som är över genomsnittet? 
+
+select rånare.namn, förmögenhet
+from rånare
+where förmögenhet > (select avg(förmögenhet)
+					 from rånare);
+
+6. Vilka rånare har ett vapen av typen revolver?
+
+select Rånare.namn
+from Rånare
+where RånarID in (select RånarID
+			      from Rånare_Vapen
+				  where VapenID in(select VapenID
+								   from Vapen
+								   where typ like '%revolver%'));
+
+7. Finns det några vapen som inte har någon rånare kopplad till sig? 
+
+(Alla vapen används)
+
+select Vapen.typ
+from Vapen
+where VapenID not in (select VapenID
+				  from Rånare_Vapen
+				  where RånarID in(select RånarID
+									    from Rånare));
+
+8. Ta fram namnen på alla rånare och använd en underfråga som tabellspecifikation. 
+
+WITH names (names)
+AS(SELECT namn FROM rånare)
+
+select * from names;
+
+9. Ta fram typen på alla vapen och använd en underfråga som en kolumnspecifikation
+
+WITH
+vapen_typer AS(SELECT typ FROM vapen)
+
+select * from vapen_typer;
+
+10. Öka lagerstatusen (antal) på de vapen som har det finns mindre än 50 av i lagret.
+
+update vapen
+set antal = antal + 1000 
+    from vapen
+	where antal in (select antal
+					  from vapen
+					  where antal < 50);
+
+11. Sätt alla skurkars förmögenhet så den är samma som John Dillingers. 
+
+update rånare
+set förmögenhet = (select förmögenhet
+				   from Rånare
+				   where namn = 'John Dillinger');
+
+12. Vem har den tredje största förmögenheten? Svara genom att använda en rekursiv underfråga. 
+
+Select Namn , Förmögenhet
+From Rånare as YttreRånare 
+Where (Select count(*) 
+From Rånare as InreRånare 
+Where InreRånare.Förmögenhet > YttreRånare.Förmögenhet) = 2;
+Föreläsning 18 – Tre sätt att skriva samma fråga
+1. Vilka typer av vapen äger Butch Cassidy? 
+
+select typ 
+from vapen
+where vapenID in(select VapenID
+				from Rånare_Vapen
+				where RånarID in(select RånarID
+								from rånare
+								where namn = 'Butch Cassidy'));
+select typ
+from vapen
+join Rånare_Vapen
+on vapen.VapenID = Rånare_Vapen.VapenID
+join Rånare
+on Rånare_Vapen.RånarID = Rånare.RånarID
+where namn = 'Butch Cassidy';
+
+select typ
+from vapen, Rånare_Vapen, Rånare
+where vapen.vapenID = Rånare_Vapen.VapenID
+AND
+Rånare_Vapen.RånarID = Rånare.RånarID
+AND Rånare.namn = 'Butch Cassidy';
+
+2. Vilka rånare har ett vapen av typen Beretta 92?
+
+
+select rånare.namn
+from rånare
+where rånare.RånarID in(select RånarID
+					    from Rånare_Vapen
+						where VapenID in(select VapenID
+										from vapen
+										where typ  like '%Beretta 92%'));
+
+select rånare.namn
+from rånare, Rånare_Vapen, vapen
+where rånare.RånarID = Rånare_Vapen.RånarID
+AND
+Rånare_Vapen.VapenID = Vapen.VapenID
+AND typ like '%Beretta 92%';
+
+select rånare.namn
+from rånare
+join Rånare_Vapen
+on rånare.RånarID = Rånare_Vapen.RånarID
+join vapen
+on Rånare_Vapen.VapenID = vapen.VapenID
+where typ like '%Beretta 92%';
+
+3. Vilka datum har Ma Barker varit med och rånat en bank? 
+
+select datum
+from Rån
+where RånID in(select RånID
+		       from Rån_Rånare
+			   where RånarID in(select RånarID
+								from Rånare
+								where namn = 'Ma Barker'));
+
+select datum
+from Rån, Rån_Rånare, Rånare
+where Rån.RånID = Rån_Rånare.RånID
+AND
+Rån_Rånare.RånarID = Rånare.RånarID
+AND namn = 'Ma Barker';
+
+select datum
+from rån
+join Rån_Rånare
+on rån.RånID = Rån_Rånare.RånID
+join rånare
+on Rån_Rånare.RånarID = rånare.RånarID
+where namn = 'Ma Barker';
+
+4. Vilka rånare har varit med och rånat Nordea där det inte förekommit några civila offer? 
+
+select namn
+from rånare
+where RånarID in(select RånarID
+			     from Rån_Rånare
+				 where RånID in(select RånID
+								from rån
+								where RånID in(select RånID
+											  from Rån_Bank
+											  where BankID in(select bankID
+															  from bank
+															  where bank.namn = 'Nordea' AND rån.offer = 0))));
+
+select distinct rånare.namn
+from rånare, Rån_Rånare, rån, Rån_Bank, bank
+where rånare.RånarID = Rån_Rånare.RånarID
+AND
+Rån_Rånare.RånID = Rån.RånID
+AND
+Rån.RånID = Rån_Bank.RånID
+AND
+Rån_Bank.BankID = bank.BankID
+AND
+bank.namn = 'Nordea' AND rån.offer = 0
+
+select distinct rånare.namn
+from rånare
+join Rån_Rånare
+on rånare.RånarID = Rån_Rånare.RånarID
+join Rån
+on Rån_Rånare.RånID = Rån.RånID
+join Rån_Bank
+on Rån.RånID = Rån_Bank.RånID
+join bank
+on Rån_Bank.BankID = bank.BankID
+where bank.Namn = 'Nordea' AND offer = 0;
+
+5. Vad är summan av de byten som ligan kom över när de använde en rosa flyktbil? 
+
+select sum(byte)
+from rån
+where Flyktbil in(select FlyktbilID
+				  from Flyktbil
+				  where Färg = 'Rosa');
+
+select sum(byte)
+from rån, Flyktbil
+where rån.Flyktbil = Flyktbil.FlyktbilID
+AND
+Flyktbil.Färg = 'Rosa';
+
+select sum(byte)
+from rån
+join Flyktbil
+on rån.Flyktbil = flyktbil.FlyktbilID
+where Flyktbil.Färg = 'Rosa';
+
+Föreläsning 19 och 22 – CTE och tabellkopior
+
+1. Vilka fyra sätt kan man använda för att dela upp komplexa SQL-frågor? 
+Underfrågor
+Vyer
+Common Table Expression
+SELECT INTO
+
+2. Skapa en tabellkopia som innehåller all information om rånet den 9 januari 2013, inklusive namn på banken och färgen och märke på flyktbilen.  
+
+(Finns ingen bank kopplat till detta rån?) RånID 4 saknas från Rån_Bank.)
+
+select rån.Datum, rån.Byte, rån.Offer, Flyktbil.Färg, Flyktbil.Märke, bank.Namn
+into RÅNET
+from rån
+join Flyktbil
+on Rån.Flyktbil = Flyktbil.FlyktbilID
+join Rån_Bank
+on Rån.RånID = Rån_Bank.RånID
+join Bank
+on Rån_Bank.RånID = bank.BankID
+where rån.Datum = '2013-01-09';
+
+3. Skapa en tabellkopia som innehåller rånarnas namn, rankning, vilka vapen de har och hur många av det vapnet som finns i lager. Använd tabellkopian för att ta fram vilket/vilka vapen som är de vanligaste bland rånarna.
+
+select VAPEN_INFO.Typ, Count(VAPEN_INFO.Typ) as mest_använd
+from VAPEN_INFO
+group by VAPEN_INFO.Typ
+order by mest_använd desc;
+
+Lös följande uppgifter genom att använda en CTE: 
+
+1. Ta fram de vapen med högre antal än genomsnittet. 
+
+with average as(
+	select avg(Vapen.Antal) as average_amount from Vapen
+	)
+	select vapen.Typ, vapen.Antal from vapen where 
+	vapen.Antal > all(select average_amount from average)
+
+2. Vilka rånare har ett vapen av typen revolver?
+
+with names as (
+	select vapen.Typ as vapen from vapen
+	)
+	select * from names where names.vapen like '%revolver%';
+
+ 3. Ta fram den totala summan för de rån som inte har några offer. 
+
+with rånen as(
+	select * from rån
+	)
+	select rånen.Byte from rånen where rånen.Offer = 0;
+
+4. Ta fram all information om bankrån som använt en grön flyktbil. 
+
+with flyktbilar as (
+	select * from Flyktbil where Färg = 'Grön'
+	)
+	select * 
+	from rån 
+	where rån.Flyktbil in(
+				select FlyktbilID 
+				from flyktbilar);
+
+
+5. Ta fram all information om bankrån som använt en flyktbil med årsmodell 2004 eller senare.
+
+with flyktbilar as (
+	select * from Flyktbil where Flyktbil.Årsmodell > '2004-01-01'
+	)
+	select * 
+	from rån 
+	where Rån.Flyktbil in(select FlyktbilID from flyktbilar);
+
+Föreläsning 20 – Design och underhåll 
+1. Hur lyder den enkla regeln som är bra att följa när man designar en databas? 
+
+“Varje tabell ska innehålla en typ av sak, med en sådan sak per rad och bara data om den saken på varje rad”
+
+2. Vad innebär ett funktionellt beroende? 
+
+Värder i en kolumn kommer att bestämma värdet i en annan kolumn.
+
+4. Vad är BCNF och hur formuleras den regeln? 
+
+1NF + alla detarminanter ska vara kandidatnycklar.
+
+5. Vad innebär det att denormalisera en databas? 
+
+Man sätter ihop 2 eller flera tabeller till 1.
+
+7. När kan man börja fundera på att denormalisera? 
+
+Tabeller som ofta joinas.
+Tabeller som sällan ändras men används ofta.
+Öka prestandan.
+Man ska bara använda denormalisering då det verkligen behövs.
+
+8. Vilka fem integritetsvillkor finns det som vi kan använda när vi skapar våra tabeller?
+
+Primary key
+Foreign key
+NOT NULL
+CHECK
+UNIQUE
+
+9. Titta på tabellerna för databasen Björnligan. Vilka integritetsvillkor skulle vi kunna applicera här? 
+
+Primary key (för primärnycklarna)
+Foreign key (för främmande nycklar)
+Not null (primärnycklarna ska inte vara null)
+Check (kontrollera olika fält med olika villkor)
+UNIQUE (Unika namn)
+
+10. Vad innebär det om vi definierar att en främmande nyckel med följande regler? 
+a. On delete cascade
+b. On update set default 
+c. On delete set null 
+
+Om nyckeln tas bort försvinner alla rader som är kopplat till denna främmande nyckeln.
+När man uppdaterar en främmande nyckel så kommer alla rader som är kopplad till den nyckeln få ett defaultvärde,
+När man tar bort en nyckel från en annan tabell som har en referensnyckel i en annan tabell kommer man få NULL där främmande nyckeln nyckeln är.
+
+Föreläsning 21 och 22 – Prestanda  
+1. Vad är ett index? 
+
+Att databasen lägger på interna strukturer på vissa kolumner som kan öka prestandan när man ställer frågor gentemot databasen.
+
+2. När kan dessa vara bra att använda? 
+
+Om man vill öka prestandan i databasen.
+
+3. Titta på tabellen rånare i databasen Björnligan. Kan vi sätta ett klustrat index på kolumnen namn här? Varför/varför inte? Vad är skillnaden mellan dessa två typer? 
+
+Nej, vi kan ej sätta ett klustrat index om vi redan har en primärnyckel. Detta eftersom att ett klustrat index automatiskt genereras när vi skapar en primärnyckel.
+
+4. Hur mycket kan vi lagra i SQL Server? 
+
+Så mycket minne som enheten har tillgängligt. Det går inte heller att lagra värden större än kapaciteten för en datatyp.
+
+5. Kolla på tabellen vapen i databasen Björnligan. Vi har 3 GB ledigt på vår hårddisk. Hur många rader kommer vi kunna lagra? 
+
+4 + 100 + 100 + 4 + 4
+318 byte (+ 50% metadata)
+318 * rader = 3 000 000 000 (3 gb to byte)
+3 000 000 000 / 318 = rader
+rader = 9 433 962 rader
+
+Föreläsning 23 – Union, except och intersect 
+1. Vad är mängdlära? 
+Principen som relationsdatabasen bygger på. Termen är en abstrakt matematisk term som innebär att vi har en samling av unika objekt av samma typ.
+
+2. Vad innebär operationerna: 
+a. Union 
+b. Snitt 
+c. Differens 
+
+Samlar ihop alla element oavsätt om den kommer från samling A	eller B.
+Samlar ihop element som finns i både A och B.
+Tar element som finns bara i  A eller bara i B. Alltså excluderar de som finns i snittet också.
+
+3. Bilden till höger illustrerar två mängder i SQL Server, dvs. två stycken tabeller. Utför de tre mängdoperationerna på dessa tabeller. Svara med SQL-kod. 
+
+SELECT Firstname, Lastname
+FROM Employee
+UNION
+SELECT Firstname, Lastname
+From Employee
+
+SELECT Firstname, Lastname
+FROM Employee
+EXCEPT
+SELECT Firstname, Lastname
+From Employee
+
+SELECT Firstname, Lastname
+FROM Employee
+INTERSECT
+SELECT Firstname, Lastname
+From Employee
+
+Föreläsning 24, 25 och 26 – Skript och T-SQL
+
+1. Vad innebär nyckelordet GO när vi skriver det i Management Studio? 
+
+Nyckelordet skickar en batch med uppgifter som finns i ett skript när den ser GO i skriptet. På så sätt kan man dela upp ett skript i olika batches.
+
+Ex 
+use master; 
+go
+
+if db_id('Bjornligan') is not null
+	drop database Bjornligan; 
+go
+
+create database Bjornligan; 
+go 
+
+2. Vad gör följande statements i SQL Server? 
+a. IF ... ELSE
+b. BEGIN ... END 
+c. WHILE 
+d. TRY ... CATCH 
+e. GOTO Heroes1 Batgirl Batman Superman Hulk Batwoman Storm Green Lantern Heroes2 f. RETURN 
+g. USE 
+h. PRINT 
+i. DECLARE 
+j. SET
+k. EXEC
+
+a. Detta är ett villkor som gör det efter IF ifall uttrycket man jämför med är sant, annars kommer man exekvera koden i ELSE taggen.
+b. Specificerar ramarna för koden, kan jämföras med måsvingar i ett objektorienterat språk.
+c. Är en loop, “Gör något så länge…”. Kan jämföras med en while-loop i ett objektorienterat språk.
+d. Försök att exekvera koden i TRY blocket, blir det ett fel kommer man till CATCH och gör diverse felhanteringskod.
+e. Gå till en plats i koden, används sällan för att det blir rörigt.
+f. Returnerar ett värde i slutet på en procedur.
+g. Anger vilken databas vi vill använda.
+h. Skriver ut ett meddelande.
+i. Deklarerar en variabel.
+j. Sätter värdet på en variabel.
+k Exekverar dynamisk SQL (en lagrad procedur).
+
+
+
+
+
+
+
+
+
+3. Vilka typer av variabler finns det i SQL Server? Vad kan de lagra och vilket scope har de? Hur ser syntaxen för dessa ut?
+
+Enkel variabel (Lokal)
+
+DECLARE @antal INT;
+
+DECLARE - deklarerar en variabel.
+@antal - vi anger namnet på den lokala variabeln
+INT - Vi anger typen på variabeln.
+
+Tilldelning…
+
+SET/SELECT @antal = (SELECT COUNT(*) FROM HEROES); 
+
+Tabellvariabel (Lokal)
+
+DECLARE @TABELL TABLE(
+tabellID INT IDENTITY PRIMARY KEY,
+column1 NVARCHAR(50) NOT NULL,
+column NVARCHAR(50)
+);
+
+INSERT @TABELL
+SELECT column1, column2 from TABELL
+
+Temporära tabeller (Lokal/Global)
+
+SELECT * into #tabell from Heroes
+SELECT * into ##tabell from Heroes
+
+# - lokal (denna session)
+## - global (kommer åt från alla sessioner i SQL server)
+
+4. Skapa en enkel variabel som heter @antalRånare. Tilldela den värdet av antalet rånare som finns i databasen. Lös uppgiften på två olika sätt, dvs. med två sorters syntax. 
+
+DECLARE @antalRånare INT = (Select COUNT(*) from rånare);
+print @antalRånare;
+
+DECLARE @antalRånare INT;
+SET	 @antalRånare = (Select COUNT(*) from rånare);
+print @antalRånare;
+
+5. Skapa en tabellvariabel som innehåller rånarnas namn, deras rankning och deras kännetecken. 
+
+Declare @Rånare TABLE( Namn NVARCHAR(50) Not Null, Ranking INT, Kännetecken NVARCHAR(100) ); INSERT @Rånare SELECT Namn, Rankning, Kännetecken From Rånare
+6. Skapa en temporär tabell med samma data som i uppgift 5. Prova att skapa dem både som lokala och globala. 
+
+SELECT rånare.Namn, rånare.Rankning, rånare.Kännetecken into #tabell from rånare
+SELECT rånare.Namn, rånare.Rankning, rånare.Kännetecken into ##tabell from rånare
+
+7. Vad gör följande systemfunktioner:
+a. @@IDENTITY 
+b. @@ROWCOUNT 
+c. @@ERROR 
+d. @@SERVERNAME 
+e. IDENT_CURRENT('tabell') 
+f. HOST_NAME() 
+g. SYSTEM_USER 
+
+Hämtar senaste genererade primärnyckeln från databasen
+Tar fram antalet påverkade rader i senaste frågan.
+Senaste genererade felkoden.
+Tar fram namnet på servern vi är på.
+Specificerar vilken tabell vi vill hämta IDENTITY på.
+Tar fram värddatanamnet.
+Tar fram systemanvändarens namn.
+
+8. Kontrollera att tabellen Rånare existerar i databasen och lägg sedan in all information från tabellen i en global temporär tabell. Gör kontrollen på två olika sätt! 
+
+IF EXISTS(
+	SELECT * FROM sys.tables WHERE name = 'Rånaren'
+)
+SELECT * INTO ##Rånare from Rånare;
+
+IF OBJECT_ID('Rånare') IS NOT NULL
+	SELECT * INTO ##Rånare From rånare;
+
+9. Vad innebär dynamisk SQL? Vilket kommando behöver vi för att kunna köra dynamisk SQL? 
+
+Att man kan sätta ihop en variabel proceduellt genom att använda variabler för att sätta ihop en SQL fråga. Vi använder EXEC för att kompilera frågan.
+
+Lös följande uppgifter genom att ställa SQL-frågor mot databasen Björ
+
+10. Skapa ett skript som lägger in ett nytt vapen i vapentabellen och även kopplar två av rånarna till ha detta vapen. Om något går fel i skriptet ska detta fångas upp med hjälp av try-catch och ett felmeddelande ska skrivas ut.
+
+
